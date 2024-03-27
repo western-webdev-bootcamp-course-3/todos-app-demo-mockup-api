@@ -4,52 +4,73 @@ import { BsCircle } from 'react-icons/bs';
 import axios from 'axios';
 
 const TodoListItem = ({ index, todo, todos, setTodos }) => {
-  // delete a todo
-  const handleDelete = async (id) => {
-    const res = await deleteTodoServer(id);
-    if (res === 'OK') {
-      const updatedTodos = todos.filter((todo) => todo.id !== id);
-      setTodos(updatedTodos);
+  const handleDelete = async () => {
+    try {
+      // setTodos(todos.filter((_, i) => i !== index));
+
+      // step 1: find the id given the index of a todo item
+      const id = todos[index].id;
+
+      // step 2: delete this todo from the backend
+      const response = await axios.delete(`http://localhost:8000/todos/${id}`);
+
+      // step 3: if step 1 is successful, delete this todo from the frontend (state)
+      if (response.status === 200)
+        setTodos(todos.filter((_, i) => i !== index));
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  // delete a todo from the server
-  const deleteTodoServer = async (id) => {
-    const response = await axios.delete(`http://localhost:8000/todos/${id}`);
-    const status = await response.status;
-    if (status === 200) return 'OK';
-    return 'ERROR';
-  };
+  const updateTodoServer = async (id, completed) => {
+    const response = await axios.patch(`http://localhost:8000/todos/${id}`, {
+      completed: !completed,
+    });
+    return response.data;
+  }
 
   // handle toggle check button
   const handleToggle = async () => {
-    let response;
-    if (todo.completed) {
-      // uncheck
-      response = await updateTodoStatusServer(todo.id, false);
-    } else {
-      // check
-      response = await updateTodoStatusServer(todo.id, true);
+    try {
+      // todo.completed = !todo.completed; // this is wrong
+      // todos[index].completed = !todos[index].completed; // this is wrong
+      // find this particular todo from the list of todos
+      // flip its completed field
+      // setTodos(
+      //   todos.map((individualTodo, individualIndex) => {
+      //     if (individualIndex === index) {
+      //       return {
+      //         ...individualTodo,
+      //         completed: !individualTodo.completed,
+      //       };
+      //     } else {
+      //       return individualTodo;
+      //     }
+      //   })
+      // );
+      // step 1: find the id given the index of a todo item
+      //         find the completed status of this todo item
+      const id = todos[index].id;
+      const completed = todos[index].completed;
+
+      // step 2: update this todo item in the backend
+      const updatedTodoObject = await updateTodoServer(id, completed);
+      // step 3: if step 2 is successful, update this todo item in the frontend (state)
+      setTodos(
+        todos.map((individualTodo, individualIndex) => {
+          if (individualIndex === index) {
+            return updatedTodoObject;
+          } else {
+            return individualTodo;
+          }
+        })
+      );
+    } catch (error) {
+      console.error(error);
     }
-
-    const updatedTodo = response.data;
-    const updatedTodos = todos.map((todo) => {
-      if (todo.id === updatedTodo.id) {
-        return response.data;
-      } else {
-        return todo;
-      }
-    });
-    setTodos(updatedTodos);
   };
 
-  // update the status of a todo on the server
-  const updateTodoStatusServer = async (id, newStatus) => {
-    const response = axios.patch(`http://localhost:8000/todos/${id}`, {
-      completed: newStatus,
-    });
-    return response;
-  };
+  console.log(todos);
 
   return (
     <li style={{ position: 'relative' }}>
@@ -60,10 +81,10 @@ const TodoListItem = ({ index, todo, todos, setTodos }) => {
           <BsCircle color='#e6e6e6' size={25} />
         )}
       </button>
-      <label className={todo.completed ? 'deleted' : ''}>{todo.item}</label>
+      <label className={todo.completed && 'deleted'}>{todo.item}</label>
       <button
         style={{ position: 'absolute', right: 10 }}
-        onClick={() => handleDelete(todo.id)}
+        onClick={handleDelete}
       >
         <RxCross2 color='#cc9a9a' />
       </button>

@@ -9,24 +9,29 @@ const TodoInput = ({ todos, setTodos }) => {
     setNewTodo(event.target.value);
   };
 
-  const handleKeyPress = async (event) => {
-    if (event.key === 'Enter' && newTodo.trim() !== '') {
-      const newTodoStored = await addTodoServer(newTodo);
-      setTodos([...todos, newTodoStored]);
-      setNewTodo('');
-    }
-  };
+  const addTodoServer = async (newTodoObj) => {
+    const response = await axios.post('http://localhost:8000/todos', newTodoObj);
+    return response.data;
+  }
 
-  /* functions that deal with the backend data */
-  // add a new todo to the server
-  const addTodoServer = async (newTodo) => {
-    const response = await axios.post('http://localhost:8000/todos', {
-      id: uuidv4(), // generate a random id
-      item: newTodo,
-      completed: false,
-    });
-    const data = await response.data;
-    return data;
+  const handleKeyPress = async (event) => {
+    try {
+      if (event.key === 'Enter' && newTodo.trim() !== '') {
+        // step 1: prepare data - create a new todo object
+        const newTodoObj = {
+          id: uuidv4(),
+          item: newTodo,
+          completed: false,
+        };
+        // step 2: add this data to the backend
+        const newTodoObjectReturned = await addTodoServer(newTodoObj);
+        // step 3: if step 2 is successful, add this data to the frontend (state)
+        setTodos([...todos, newTodoObjectReturned]);
+        setNewTodo('');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
