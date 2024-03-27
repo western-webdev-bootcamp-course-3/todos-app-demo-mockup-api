@@ -16,14 +16,13 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "cypress": "^13.6.1",
     "json-server": "^0.17.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
-    "mockupapi": "json-server  --watch backend/db.json --port 8000"
+    "mockupapi": "json-server --watch backend/db.json --port 8000"
   },
   "eslintConfig": {
     "extends": [
